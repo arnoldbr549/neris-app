@@ -5,6 +5,13 @@
   text-align: center;
 }
 
+.app-container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0.1rem 2rem 2rem 2rem;
+  text-align: center;
+}
+
 .logo {
   height: 6em;
   padding: 1.5em;
@@ -39,4 +46,13 @@
 
 .read-the-docs {
   color: #888;
+}
+
+.section-header {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1e293b; /* slate-800 for light mode */
+}
+.dark .section-header {
+  color: #f1f5f9; /* slate-100 for dark mode */
 }

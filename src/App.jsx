@@ -1,120 +1,69 @@
-import React, { useState, useEffect } from 'react';
-import WorkflowEngine from './components/WorkflowEngine';
-import './App.css';
+import './App.css'
+import { useEffect, useState } from 'react'
+import WorkflowEngine from './components/WorkflowEngine'
+import nerisLogo from './assets/neris_logo.jpg'
+import pulsiamLogo from './assets/puslaim_horizontal.png'
 
 function App() {
-  const [workflowData, setWorkflowData] = useState(null);
-  const [currentPage, setCurrentPage] = useState('incident-basics');
-  const [formData, setFormData] = useState({});
-  const [workflowState, setWorkflowState] = useState({
-    currentStep: 0,
-    completedSteps: [],
-    pageHistory: []
-  });
-
+  const [workflowData, setWorkflowData] = useState(null)
+  const [currentPage, setCurrentPage] = useState('')
+  const [formData, setFormData] = useState({})
+  const [workflowState, setWorkflowState] = useState({ currentStep: 0, pageHistory: [] })
+  const [error, setError] = useState(null)
 
   useEffect(() => {
-    // Load workflow data with cache busting
-    const timestamp = new Date().getTime();
-    fetch(`/incident-workflow-logic.json?v=${timestamp}&nocache=true`)
-      .then(response => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
+    fetch('/incident-workflow-logic.json')
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to load workflow JSON')
+        return res.json()
       })
       .then(data => {
-        setWorkflowData(data);
+        setWorkflowData(data)
+        if (data?.workflow?.pages?.length > 0) {
+          setCurrentPage(data.workflow.pages[0].id)
+        } else {
+          setError('No pages found in workflow data.')
+        }
       })
-      .catch(error => {
-        console.error('App: Error loading workflow data:', error);
-        // Fallback to a simple workflow structure
-        setWorkflowData({
-          workflow: {
-            name: "Incident Management",
-            pages: [{
-              id: 'incident-basics',
-              name: 'Incident Basics',
-              steps: [{
-                id: 'start',
-                type: 'start',
-                label: 'Start',
-                next: 'end'
-              }, {
-                id: 'end',
-                type: 'end',
-                label: 'End'
-              }]
-            }]
-          }
-        });
-      });
-  }, []);
+      .catch(e => setError(e.message))
+  }, [])
 
-  const handleStepComplete = (stepId, data) => {
-    setFormData(prev => ({ ...prev, [stepId]: data }));
-    
-    // Navigate to next page
-    if (currentPage === 'incident-basics') {
-      handlePageChange('incident-times-units');
-    }
-  };
-
-  const handlePageChange = (newPage) => {
-    setWorkflowState(prev => ({
-      ...prev,
-      pageHistory: [...prev.pageHistory, currentPage],
-      currentStep: 0,
-      completedSteps: []
-    }));
-    setCurrentPage(newPage);
-  };
-
-  const handleBack = () => {
-    if (workflowState.pageHistory.length > 0) {
-      const previousPage = workflowState.pageHistory[workflowState.pageHistory.length - 1];
-      setWorkflowState(prev => ({
-        ...prev,
-        pageHistory: prev.pageHistory.slice(0, -1),
-        currentStep: 0,
-        completedSteps: []
-      }));
-      setCurrentPage(previousPage);
-    }
-  };
-
-  if (!workflowData) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading workflow...</p>
-        </div>
-      </div>
-    );
+  const onStepComplete = (stepId, stepData) => {
+    setFormData(prev => ({ ...prev, [stepId]: stepData }))
+    setWorkflowState(prev => ({ ...prev, currentStep: prev.currentStep + 1 }))
+  }
+  const onPageChange = (pageId) => {
+    setCurrentPage(pageId)
+    setWorkflowState({ currentStep: 0 })
+  }
+  const onBack = () => {
+    setWorkflowState(prev => ({ ...prev, currentStep: Math.max(prev.currentStep - 1, 0) }))
   }
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-8">
-        <header className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2 text-center">
-            National Emergency Response Information System
-          </h1>
-        </header>
+  if (error) return <div style={{color:'red'}}>Error: {error}</div>
+  if (!workflowData || !currentPage) return <div style={{color:'blue'}}>Loading workflow...</div>
 
-        <WorkflowEngine
-          workflowData={workflowData}
-          currentPage={currentPage}
-          formData={formData}
-          workflowState={workflowState}
-          onStepComplete={handleStepComplete}
-          onPageChange={handlePageChange}
-          onBack={handleBack}
-        />
+  return (
+    <div className="app-container">
+      <div className="flex items-center justify-center gap-6 mb-4">
+        <img src={nerisLogo} alt="NERIS Logo" className="max-h-20" />
+        <div className="flex flex-col items-center text-xs font-semibold text-purple-800 select-none lowercase">
+          <span>powered</span>
+          <span>by</span>
+        </div>
+        <img src={pulsiamLogo} alt="Pulsiam Logo" className="max-h-16" />
       </div>
+      <WorkflowEngine
+        workflowData={workflowData}
+        currentPage={currentPage}
+        formData={formData}
+        workflowState={workflowState}
+        onStepComplete={onStepComplete}
+        onPageChange={onPageChange}
+        onBack={onBack}
+      />
     </div>
-  );
+  )
 }
 
-export default App;
+export default App

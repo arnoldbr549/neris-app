@@ -1405,7 +1405,7 @@ const FormStep = ({ step, formData, defaultData, onSubmit, onPrevious, showPrevi
       case 'section':
         return (
           <div key={fieldName} className="mb-6 border border-gray-200 rounded-lg">
-            <div className="px-4 py-3 bg-gray-50 rounded-t-lg text-left section-header">
+            <div className="px-4 py-1 bg-gray-50 rounded-t-lg text-left section-header">
               {field.label}
             </div>
             <div className="p-4 bg-white rounded-b-lg">
@@ -1575,7 +1575,6 @@ const FormStep = ({ step, formData, defaultData, onSubmit, onPrevious, showPrevi
     <div className="max-w-4xl mx-auto p-6">
       <form onSubmit={(e) => { e.preventDefault(); handleFormSubmit({}); }} className="space-y-6">
         {renderFields()}
-        
         {/* Status Bar */}
         {lastFocusedField && (
           <div className="fixed bottom-0 left-0 right-0 bg-gray-800 text-white p-2 text-sm border-t border-gray-600 z-50">
@@ -1585,7 +1584,6 @@ const FormStep = ({ step, formData, defaultData, onSubmit, onPrevious, showPrevi
             )}
           </div>
         )}
-        
         <div className="flex justify-between space-x-4 pt-6 border-t mb-16">
           {showPrevious && (
             <button
@@ -1597,12 +1595,24 @@ const FormStep = ({ step, formData, defaultData, onSubmit, onPrevious, showPrevi
             </button>
           )}
           <div className="flex-1"></div>
-          <button
-            type="submit"
-            className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Next
-          </button>
+          {/* Show Submit button only on the second page */}
+          {step && step.id === 'incident-record-control' && (
+            <button
+              type="submit"
+              className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Submit
+            </button>
+          )}
+          {/* Otherwise show Next */}
+          {(!step || step.id !== 'incident-record-control') && (
+            <button
+              type="submit"
+              className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Next
+            </button>
+          )}
         </div>
       </form>
     </div>
