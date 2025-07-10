@@ -1,0 +1,384 @@
+{
+  "workflow": {
+    "name": "National Emergency Response Information System",
+    "version": "1.0",
+    "description": "Workflow for incident management and response unit tracking",
+    "pages": [
+      {
+        "id": "incident-basics",
+        "name": "Incident Basics",
+        "steps": [
+          {
+            "id": "start",
+            "type": "start",
+            "label": "Start",
+            "next": "select-incident-type"
+          },
+          {
+            "id": "select-incident-type",
+            "type": "form",
+            "label": "Incident Basics",
+            "fields": [
+              {
+                "name": "incidentType1",
+                "type": "searchable-combo",
+                "label": "Select an Incident Type",
+                "required": true,
+                "dataSource": {
+                  "file": "/value-sets/type_incident.csv",
+                  "format": "CONCATENATE(E2,\" - \",F2,\" - \",G2)",
+                  "columns": {
+                    "value": "value_3",
+                    "display": "CONCATENATE(E2,\" - \",F2,\" - \",G2)"
+                  }
+                },
+                "validation": {
+                  "rule": "required",
+                  "message": "Please select an incident type"
+                }
+              },
+              {
+                "name": "principleIncidentType",
+                "type": "checkbox",
+                "label": "Principle Incident Type"
+              },
+              {
+                "name": "incidentType2",
+                "type": "searchable-combo",
+                "label": "Select an Incident Type",
+                "required": false,
+                "dataSource": {
+                  "file": "/value-sets/type_incident.csv",
+                  "format": "CONCATENATE(E2,\" - \",F2,\" - \",G2)",
+                  "columns": {
+                    "value": "value_3",
+                    "display": "CONCATENATE(E2,\" - \",F2,\" - \",G2)"
+                  }
+                }
+              },
+              {
+                "name": "incidentType3",
+                "type": "searchable-combo",
+                "label": "Select an Incident Type",
+                "required": false,
+                "dataSource": {
+                  "file": "/value-sets/type_incident.csv",
+                  "format": "CONCATENATE(E2,\" - \",F2,\" - \",G2)",
+                  "columns": {
+                    "value": "value_3",
+                    "display": "CONCATENATE(E2,\" - \",F2,\" - \",G2)"
+                  }
+                }
+              },
+              {
+                "name": "respondingUnits",
+                "type": "array",
+                "label": "Responding Units",
+                "item": {
+                  "type": "object",
+                  "fields": [
+                    {
+                      "name": "designation",
+                      "type": "text",
+                      "label": "Responding Unit Designation",
+                      "required": true,
+                      "validation": {
+                        "rule": "required",
+                        "message": "Responding unit designation is required"
+                      }
+                    },
+                    {
+                      "name": "staffing",
+                      "type": "number",
+                      "label": "Responding Unit Staffing",
+                      "required": true,
+                      "min": 1,
+                      "validation": {
+                        "rule": "min",
+                        "message": "Staffing must be at least 1"
+                      }
+                    },
+                    {
+                      "name": "startingLatitude",
+                      "type": "number",
+                      "label": "Starting Latitude",
+                      "required": true,
+                      "step": "0.000001",
+                      "placeholder": "Latitude"
+                    },
+                    {
+                      "name": "startingLongitude",
+                      "type": "number",
+                      "label": "Starting Longitude",
+                      "required": true,
+                      "step": "0.000001",
+                      "placeholder": "Longitude"
+                    },
+                    {
+                      "name": "dispatchTime",
+                      "type": "datetime-local",
+                      "label": "Dispatch Time",
+                      "required": true
+                    },
+                    {
+                      "name": "enrouteTime",
+                      "type": "datetime-local",
+                      "label": "Enroute Time",
+                      "required": true
+                    },
+                    {
+                      "name": "arrivalTime",
+                      "type": "datetime-local",
+                      "label": "Arrival Time",
+                      "required": true
+                    },
+                    {
+                      "name": "clearTime",
+                      "type": "datetime-local",
+                      "label": "Clear Time",
+                      "required": true
+                    },
+                    {
+                      "name": "cancelTime",
+                      "type": "datetime-local",
+                      "label": "Cancel Time",
+                      "required": false
+                    },
+                    {
+                      "name": "stagingTime",
+                      "type": "datetime-local",
+                      "label": "Staging Time",
+                      "required": false
+                    }
+                  ]
+                },
+                "minItems": 1,
+                "addButtonLabel": "Add Responding Unit",
+                "removeButtonLabel": "Remove"
+              },
+              {
+                "name": "callAndCommandSection",
+                "type": "section",
+                "label": "Call and Command",
+                "fields": [
+                  {
+                    "name": "callProcessingBeginTime",
+                    "type": "datetime-local",
+                    "label": "Enter the Call Processing Begin Time",
+                    "required": true
+                  },
+                  {
+                    "name": "dispatchAnswerTime",
+                    "type": "datetime-local",
+                    "label": "Enter the Dispatch Answer Time",
+                    "required": true
+                  },
+                  {
+                    "name": "commandEstablishedTime",
+                    "type": "datetime-local",
+                    "label": "Enter the Command Established Time",
+                    "required": true
+                  },
+                  {
+                    "name": "dispatchArrivalTime",
+                    "type": "datetime-local",
+                    "label": "Enter the Dispatch Arrival Time",
+                    "required": true
+                  }
+                ]
+              },
+              {
+                "name": "locationSection",
+                "type": "section",
+                "label": "Location",
+                "fields": [
+                  {
+                    "name": "locationMethod",
+                    "type": "select",
+                    "label": "Select a method that best represents the location",
+                    "required": true,
+                    "options": [
+                      { "value": "point", "label": "Point" },
+                      { "value": "area", "label": "Area" }
+                    ]
+                  },
+                  {
+                    "name": "interactiveMap",
+                    "type": "map",
+                    "label": "Show Interactive Map",
+                    "conditional": {
+                      "field": "locationSection.locationMethod",
+                      "value": "point"
+                    }
+                  },
+                  {
+                    "name": "featureOutputType",
+                    "type": "select",
+                    "label": "Select Feature Output Type",
+                    "required": true,
+                    "conditional": {
+                      "field": "locationSection.locationMethod",
+                      "value": "point"
+                    },
+                    "options": [
+                      { "value": "point", "label": "Point" },
+                      { "value": "address", "label": "Address" },
+                      { "value": "intersection", "label": "Intersection" },
+                      { "value": "poi", "label": "Point of Interest" }
+                    ]
+                  },
+                  {
+                    "name": "incidentLocationDifferent",
+                    "type": "checkbox",
+                    "label": "Incident Location different than dispatched"
+                  },
+                  {
+                    "name": "locationType",
+                    "type": "searchable-combo",
+                    "label": "Select a Location Type",
+                    "required": false,
+                    "dataSource": {
+                      "file": "/value-sets/type_location_use.csv",
+                      "columns": {
+                        "value": "value_1",
+                        "display": "DISTINCT(description_1)"
+                      }
+                    }
+                  },
+                  {
+                    "name": "locationUse",
+                    "type": "searchable-combo",
+                    "label": "Select Location Use",
+                    "required": false,
+                    "dataSource": {
+                      "file": "/value-sets/type_location_use.csv",
+                      "columns": {
+                        "value": "value_2",
+                        "display": "CONCATENATE(description_1,\" - \",description_2)"
+                      }
+                    }
+                  },
+                  {
+                    "name": "reasonForVacancy",
+                    "type": "searchable-combo",
+                    "label": "Select Reason for Vacancy",
+                    "required": false,
+                    "dataSource": {
+                      "file": "/value-sets/type_vacancy.csv",
+                      "columns": {
+                        "value": "value_1",
+                        "display": "description"
+                      }
+                    }
+                  }
+                ]
+              }
+            ],
+            "next": "page-reference-incident-times-units"
+          },
+          {
+            "id": "page-reference-incident-times-units",
+            "type": "page-reference",
+            "label": "Navigate to Incident Time(s) and Units",
+            "next": "incident-times-units"
+          }
+        ]
+      },
+      {
+        "id": "incident-times-units",
+        "name": "Incident Time(s) and Units",
+        "steps": [
+          {
+            "id": "start",
+            "type": "start",
+            "label": "Start",
+            "next": "incident-record-control"
+          },
+          {
+            "id": "incident-record-control",
+            "type": "form",
+            "label": "Incident Record Control Information",
+            "fields": [
+              {
+                "name": "incidentDate",
+                "type": "date",
+                "label": "Enter the Incident Date",
+                "required": true
+              },
+              {
+                "name": "incidentNumber",
+                "type": "text",
+                "label": "Enter the Incident Number",
+                "required": true
+              },
+              {
+                "name": "incidentStatus",
+                "type": "select",
+                "label": "Select Incident Status",
+                "required": true,
+                "options": [
+                  { "value": "open", "label": "Open" },
+                  { "value": "closed", "label": "Closed" }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "prompt-add-responding-unit",
+            "type": "message",
+            "label": "Prompt to Add Responding Unit",
+            "message": "Would you like to add another responding unit?",
+            "next": "add-responding-unit-decision"
+          },
+          {
+            "id": "add-responding-unit-decision",
+            "type": "decision",
+            "label": "Add Responding Unit?",
+            "options": [
+              {
+                "value": "yes",
+                "label": "Yes",
+                "next": "incident-record-control"
+              },
+              {
+                "value": "no",
+                "label": "No",
+                "next": "end"
+              }
+            ]
+          },
+          {
+            "id": "end",
+            "type": "end",
+            "label": "End"
+          }
+        ]
+      }
+    ]
+  },
+  "validation": {
+    "rules": {
+      "required": {
+        "type": "boolean",
+        "message": "This field is required"
+      },
+      "date": {
+        "type": "date",
+        "message": "Please enter a valid date"
+      },
+      "datetime": {
+        "type": "datetime",
+        "message": "Please enter a valid date and time"
+      },
+      "min": {
+        "type": "number",
+        "message": "Value must be at least {min}"
+      }
+    }
+  },
+  "navigation": {
+    "allowBack": true,
+    "allowSkip": false,
+    "saveProgress": true
+  }
+} 
