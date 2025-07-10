@@ -24,10 +24,10 @@
                     "required": true,
                     "dataSource": {
                       "file": "/value-sets/type_incident.csv",
-                      "format": "CONCATENATE(E2,\" - \",F2,\" - \",G2)",
+                      "format": "CONCATENATE(description_1,\" - \",description_2,\" - \",description_3)",
                       "columns": {
-                        "value": "value_3",
-                        "display": "CONCATENATE(E2,\" - \",F2,\" - \",G2)"
+                        "value": "CONCATENATE(value_1,\"||\",value_2,\"||\",value_3)",
+                        "display": "CONCATENATE(description_1,\" - \",description_2,\" - \",description_3)"
                       }
                     },
                     "validation": {
@@ -47,10 +47,10 @@
                     "required": false,
                     "dataSource": {
                       "file": "/value-sets/type_incident.csv",
-                      "format": "CONCATENATE(E2,\" - \",F2,\" - \",G2)",
+                      "format": "CONCATENATE(description_1,\" - \",description_2,\" - \",description_3)",
                       "columns": {
-                        "value": "value_3",
-                        "display": "CONCATENATE(E2,\" - \",F2,\" - \",G2)"
+                        "value": "CONCATENATE(value_1,\"||\",value_2,\"||\",value_3)",
+                        "display": "CONCATENATE(description_1,\" - \",description_2,\" - \",description_3)"
                       }
                     }
                   },
@@ -61,10 +61,10 @@
                     "required": false,
                     "dataSource": {
                       "file": "/value-sets/type_incident.csv",
-                      "format": "CONCATENATE(E2,\" - \",F2,\" - \",G2)",
+                      "format": "CONCATENATE(description_1,\" - \",description_2,\" - \",description_3)",
                       "columns": {
-                        "value": "value_3",
-                        "display": "CONCATENATE(E2,\" - \",F2,\" - \",G2)"
+                        "value": "CONCATENATE(value_1,\"||\",value_2,\"||\",value_3)",
+                        "display": "CONCATENATE(description_1,\" - \",description_2,\" - \",description_3)"
                       }
                     }
                   }

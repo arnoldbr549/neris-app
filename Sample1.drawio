@@ -1,6 +1,6 @@
 <mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/27.0.9 Chrome/134.0.6998.205 Electron/35.4.0 Safari/537.36" version="27.0.9" pages="7">
   <diagram id="sy2ry4PqXwD0oiYiAOHQ" name="Incident Basics">
-    <mxGraphModel dx="1426" dy="841" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+    <mxGraphModel dx="815" dy="481" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -16,10 +16,10 @@
         <mxCell id="DJJQKfjq9lKYczgfzK40-8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="yGMhCGlIZExSTfajq-ja-1" source="xEwCh1YSNSlqkwGJqUVj-36" target="xEwCh1YSNSlqkwGJqUVj-37">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="xEwCh1YSNSlqkwGJqUVj-36" value="Select an Incident Type (Searchable Combo Box) [/value-sets/type_incident.csv] [CONCATENATE(E2,&quot; - &quot;,F2,&quot; - &quot;,G2)]" style="rounded=1;whiteSpace=wrap;html=1;absoluteArcSize=1;arcSize=14;strokeWidth=1;" vertex="1" parent="yGMhCGlIZExSTfajq-ja-1">
+        <mxCell id="xEwCh1YSNSlqkwGJqUVj-36" value="Select an Incident Type (Searchable Combo Box) [/value-sets/type_incident.csv] [CONCATENATE(description_1,&quot; - &quot;,description_2,&quot; - &quot;,description_3)CONCATENATE(value_1,&quot;||&quot;,value_2,&quot;||&quot;,value_3)]" style="rounded=1;whiteSpace=wrap;html=1;absoluteArcSize=1;arcSize=14;strokeWidth=1;" vertex="1" parent="yGMhCGlIZExSTfajq-ja-1">
           <mxGeometry x="50" y="160" width="350" height="70" as="geometry" />
         </mxCell>
-        <mxCell id="xEwCh1YSNSlqkwGJqUVj-37" value="Select an Incident Type (Searchable Combo Box) [/value-sets/type_incident.csv] [CONCATENATE(E2,&quot; - &quot;,F2,&quot; - &quot;,G2)]" style="rounded=1;whiteSpace=wrap;html=1;absoluteArcSize=1;arcSize=14;strokeWidth=1;" vertex="1" parent="yGMhCGlIZExSTfajq-ja-1">
+        <mxCell id="xEwCh1YSNSlqkwGJqUVj-37" value="Select an Incident Type (Searchable Combo Box) [/value-sets/type_incident.csv] [CONCATENATE(description_1,&quot; - &quot;,description_2,&quot; - &quot;,description_3)CONCATENATE(value_1,&quot;||&quot;,value_2,&quot;||&quot;,value_3)]" style="rounded=1;whiteSpace=wrap;html=1;absoluteArcSize=1;arcSize=14;strokeWidth=1;" vertex="1" parent="yGMhCGlIZExSTfajq-ja-1">
           <mxGeometry x="50" y="270" width="350" height="70" as="geometry" />
         </mxCell>
         <mxCell id="DJJQKfjq9lKYczgfzK40-7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="yGMhCGlIZExSTfajq-ja-1" source="xEwCh1YSNSlqkwGJqUVj-38" target="xEwCh1YSNSlqkwGJqUVj-36">
@@ -236,10 +236,10 @@
         <mxCell id="q8FXvyHsp9UDSg1Ed_WQ-63" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="4HyA0bmCOsFl0Yq-U-qu-1" source="q8FXvyHsp9UDSg1Ed_WQ-58" target="q8FXvyHsp9UDSg1Ed_WQ-62">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="q8FXvyHsp9UDSg1Ed_WQ-58" value="Select a Location Type (Searchable Combo Box) [/value-sets/type_location_use.csv] [DISTINCT(description_1)]" style="rounded=1;whiteSpace=wrap;html=1;absoluteArcSize=1;arcSize=14;strokeWidth=1;" vertex="1" parent="4HyA0bmCOsFl0Yq-U-qu-1">
+        <mxCell id="q8FXvyHsp9UDSg1Ed_WQ-58" value="Select a Location Type (Searchable Combo Box) [/value-sets/type_location_use.csv] [DISTINCT(description_1),DISTINCT(value_1)]" style="rounded=1;whiteSpace=wrap;html=1;absoluteArcSize=1;arcSize=14;strokeWidth=1;" vertex="1" parent="4HyA0bmCOsFl0Yq-U-qu-1">
           <mxGeometry x="243.5" y="740" width="350" height="70" as="geometry" />
         </mxCell>
-        <mxCell id="q8FXvyHsp9UDSg1Ed_WQ-59" value="Select Reason for Vacancy (Searchable Combo Box) [/value-sets/type_vacancy.csv] [dscription]" style="rounded=1;whiteSpace=wrap;html=1;absoluteArcSize=1;arcSize=14;strokeWidth=1;" vertex="1" parent="4HyA0bmCOsFl0Yq-U-qu-1">
+        <mxCell id="q8FXvyHsp9UDSg1Ed_WQ-59" value="Select Reason for Vacancy (Searchable Combo Box) [/value-sets/type_vacancy.csv] [description,value]" style="rounded=1;whiteSpace=wrap;html=1;absoluteArcSize=1;arcSize=14;strokeWidth=1;" vertex="1" parent="4HyA0bmCOsFl0Yq-U-qu-1">
           <mxGeometry x="285" y="980" width="270" height="70" as="geometry" />
         </mxCell>
         <mxCell id="q8FXvyHsp9UDSg1Ed_WQ-61" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="4HyA0bmCOsFl0Yq-U-qu-1" source="q8FXvyHsp9UDSg1Ed_WQ-60" target="q8FXvyHsp9UDSg1Ed_WQ-58">
@@ -248,7 +248,7 @@
         <mxCell id="q8FXvyHsp9UDSg1Ed_WQ-60" value="Incident location different than dispatched (Checkbox)" style="rounded=1;whiteSpace=wrap;html=1;absoluteArcSize=1;arcSize=14;strokeWidth=1;" vertex="1" parent="4HyA0bmCOsFl0Yq-U-qu-1">
           <mxGeometry x="358.5" y="600" width="120" height="70" as="geometry" />
         </mxCell>
-        <mxCell id="q8FXvyHsp9UDSg1Ed_WQ-62" value="Select Location Use (Searchable Combo Box) [/value-sets/type_location_use.csv] [CONCATENATE(description_1,&quot; - &quot;,description_2)]" style="rounded=1;whiteSpace=wrap;html=1;absoluteArcSize=1;arcSize=14;strokeWidth=1;" vertex="1" parent="4HyA0bmCOsFl0Yq-U-qu-1">
+        <mxCell id="q8FXvyHsp9UDSg1Ed_WQ-62" value="Select Location Use (Searchable Combo Box) [/value-sets/type_location_use.csv] [CONCATENATE(description_1,&quot; - &quot;,description_2),value_2]" style="rounded=1;whiteSpace=wrap;html=1;absoluteArcSize=1;arcSize=14;strokeWidth=1;" vertex="1" parent="4HyA0bmCOsFl0Yq-U-qu-1">
           <mxGeometry x="243.5" y="850" width="350" height="70" as="geometry" />
         </mxCell>
         <mxCell id="DJJQKfjq9lKYczgfzK40-9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="1" source="xEwCh1YSNSlqkwGJqUVj-37">

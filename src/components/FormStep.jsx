@@ -3,146 +3,6 @@ import { useForm } from 'react-hook-form';
 import { ChevronDownIcon, ChevronRightIcon, PlusIcon, TrashIcon, SearchIcon } from 'lucide-react';
 import MapComponent from './MapComponent';
 
-// CheckboxArray Component
-const CheckboxArray = ({ field, fieldName, register, fieldError, isInvalid, handleFieldChange }) => {
-  const [options, setOptions] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [selectedValues, setSelectedValues] = useState([]);
-
-  useEffect(() => {
-    if (field.dataSource) {
-      loadOptions();
-    }
-  }, [field.dataSource]);
-
-  const loadOptions = async () => {
-    if (!field.dataSource?.file) return;
-    
-    const columns = field.dataSource.columns;
-    setLoading(true);
-    try {
-      const response = await fetch(field.dataSource.file);
-      
-      if (!response.ok) {
-        throw new Error(`Failed to load data: ${response.status}`);
-      }
-      
-      const csvText = await response.text();
-      
-      const lines = csvText.split('\n');
-      const headers = lines[0].split(',');
-      
-      let data = lines.slice(1).map(line => {
-        const values = line.split(',');
-        const row = {};
-        headers.forEach((header, index) => {
-          row[header.trim()] = values[index]?.trim() || '';
-        });
-        return row;
-      }).filter(row => row.active === 'TRUE');
-
-      // Apply the formatting formula
-      const formattedOptions = data.map(row => {
-        if (columns?.display) {
-          // Handle the DISTINCT formula format
-          if (columns.display.includes('DISTINCT')) {
-            // Extract column name from DISTINCT(description_1) format
-            const match = columns.display.match(/DISTINCT\(([^)]+)\)/);
-            if (match) {
-              const colName = match[1];
-              return row[colName];
-            }
-          }
-          // Handle the CONCATENATE formula format
-          if (columns.display.includes('CONCATENATE')) {
-            // Extract column names from the formula
-            const matches = columns.display.match(/[A-Z]\d+/g);
-            if (matches) {
-              const displayCols = matches.map(match => {
-                // Convert Excel column reference to column name
-                const colIndex = match.charCodeAt(0) - 65; // A=0, B=1, etc.
-                return headers[colIndex];
-              });
-              // Only include non-empty values
-              return displayCols
-                .map(col => row[col])
-                .filter(val => val && val.length > 0)
-                .join(' - ');
-            }
-          } else {
-            // Handle comma-separated column names
-            const displayCols = columns.display.split(',').map(col => col.trim());
-            return displayCols
-              .map(col => row[col])
-              .filter(val => val && val.length > 0)
-              .join(' - ');
-          }
-        }
-        return row[columns?.value] || row[headers[0]];
-      });
-      
-      // Create distinct options if DISTINCT is specified
-      let finalOptions;
-      if (columns?.display?.includes('DISTINCT')) {
-        const distinctMap = new Map();
-        formattedOptions.forEach((display, index) => {
-          if (display && display.trim()) {
-            if (!distinctMap.has(display)) {
-              distinctMap.set(display, display);
-            }
-          }
-        });
-        finalOptions = Array.from(distinctMap.entries()).map(([label, value]) => ({
-          value: value,
-          label: label
-        }));
-      } else {
-        finalOptions = formattedOptions.map((display, index) => ({
-          value: data[index][columns?.value || headers[0]],
-          label: display
-        }));
-      }
-      setOptions(finalOptions);
-    } catch (error) {
-      console.error('Error loading options:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleCheckboxChange = (optionValue, checked) => {
-    let newSelectedValues;
-    if (checked) {
-      newSelectedValues = [...selectedValues, optionValue];
-    } else {
-      newSelectedValues = selectedValues.filter(value => value !== optionValue);
-    }
-    setSelectedValues(newSelectedValues);
-    handleFieldChange(field, newSelectedValues);
-  };
-
-  if (loading) {
-    return <div className="text-gray-500 text-sm">Loading options...</div>;
-  }
-
-  return (
-    <div className="space-y-2">
-      {options.map((option, index) => (
-        <label key={index} className="flex items-center">
-          <input
-            type="checkbox"
-            value={option.value}
-            checked={selectedValues.includes(option.value)}
-            onChange={(e) => handleCheckboxChange(option.value, e.target.checked)}
-            className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-          />
-          <span className="text-sm text-gray-700">{option.label}</span>
-        </label>
-      ))}
-    </div>
-  );
-};
-
 // MultiSelect Component
 const MultiSelect = ({ field, fieldName, register, fieldError, isInvalid, handleFieldChange }) => {
   const [options, setOptions] = useState([]);
@@ -157,6 +17,14 @@ const MultiSelect = ({ field, fieldName, register, fieldError, isInvalid, handle
   }, [field.dataSource]);
 
   const loadOptions = async () => {
+    if (field.label === 'Select a Location Type') {
+      // eslint-disable-next-line no-console
+      console.log('loadOptions running for Select a Location Type');
+    }
+    if (field && field.dataSource && field.dataSource.columns) {
+      // eslint-disable-next-line no-console
+      console.log('loadOptions:', field.label, 'columns.display:', field.dataSource.columns.display);
+    }
     if (!field.dataSource?.file) return;
     
     const columns = field.dataSource.columns;
@@ -170,11 +38,30 @@ const MultiSelect = ({ field, fieldName, register, fieldError, isInvalid, handle
       
       const csvText = await response.text();
       
+      // Robust CSV parsing (handles quoted fields)
+      function parseCSVLine(line) {
+        const result = [];
+        let current = '';
+        let inQuotes = false;
+        for (let i = 0; i < line.length; i++) {
+          const char = line[i];
+          if (char === '"') {
+            inQuotes = !inQuotes;
+          } else if (char === ',' && !inQuotes) {
+            result.push(current);
+            current = '';
+          } else {
+            current += char;
+          }
+        }
+        result.push(current);
+        return result;
+      }
+
       const lines = csvText.split('\n');
-      const headers = lines[0].split(',');
-      
+      const headers = parseCSVLine(lines[0]);
       let data = lines.slice(1).map(line => {
-        const values = line.split(',');
+        const values = parseCSVLine(line);
         const row = {};
         headers.forEach((header, index) => {
           row[header.trim()] = values[index]?.trim() || '';
@@ -225,27 +112,32 @@ const MultiSelect = ({ field, fieldName, register, fieldError, isInvalid, handle
       // Create distinct options if DISTINCT is specified
       let finalOptions;
       if (columns?.display?.includes('DISTINCT')) {
-        const distinctMap = new Map();
-        formattedOptions.forEach((display, index) => {
-          if (display && display.trim()) {
-            if (!distinctMap.has(display)) {
-              distinctMap.set(display, display);
-            }
+        // Build a map from description_1 to value_1 (first occurrence only)
+        const seen = new Set();
+        finalOptions = [];
+        data.forEach(row => {
+          const displayCol = columns.display.match(/DISTINCT\(([^)]+)\)/)[1];
+          const valueCol = columns.value;
+          const displayValue = row[displayCol];
+          const backingValue = row[valueCol];
+          if (displayValue && !seen.has(displayValue)) {
+            seen.add(displayValue);
+            finalOptions.push({ value: backingValue, label: displayValue });
           }
         });
-        finalOptions = Array.from(distinctMap.entries()).map(([label, value]) => ({
-          value: value,
-          label: label
-        }));
+        if (field.label === 'Select a Location Type') {
+          // eslint-disable-next-line no-console
+          console.log('DISTINCT description/value pairs:', finalOptions);
+        }
       } else {
-        finalOptions = formattedOptions.map((display, index) => ({
+        finalOptions = formattedOptions.map((option, index) => ({
           value: data[index][columns?.value || headers[0]],
-          label: display
+          label: option
         }));
       }
       setOptions(finalOptions);
     } catch (error) {
-      console.error('Error loading options:', error);
+      // console.error('Error loading options:', error);
     } finally {
       setLoading(false);
     }
@@ -312,7 +204,7 @@ const MultiSelect = ({ field, fieldName, register, fieldError, isInvalid, handle
 };
 
 // SearchableCombo Component
-const SearchableCombo = ({ field, fieldName, register, fieldError, isInvalid, handleFieldChange, filterBy, setValue }) => {
+const SearchableCombo = ({ field, fieldName, register, fieldError, isInvalid, handleFieldChange, filterBy, setValue, onFocus, onBlur, onBackingValueChange, onActiveChange, disabled }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [options, setOptions] = useState([]);
@@ -322,8 +214,6 @@ const SearchableCombo = ({ field, fieldName, register, fieldError, isInvalid, ha
   const [isTyping, setIsTyping] = useState(false);
   const selectedItemRef = useRef(null);
 
-  const selectedLabel = options.find(opt => opt.value === selectedValue)?.label || '';
-
   const filteredOptions = isTyping
     ? options.filter(option =>
         option.label.toLowerCase().includes(searchTerm.toLowerCase())
@@ -332,14 +222,19 @@ const SearchableCombo = ({ field, fieldName, register, fieldError, isInvalid, ha
 
   useEffect(() => {
     // Only load options for Select Location Use if filterBy is set
-    if (field.label === 'Select a Location Use' && !filterBy) {
+    if (field.label === 'Select Location Use' && !filterBy) {
       setOptions([]);
       return;
     }
     if (field.dataSource) {
       loadOptions();
     }
-  }, [field.dataSource, filterBy]);
+  }, [
+    field.dataSource?.file,
+    field.dataSource?.columns?.display,
+    field.dataSource?.columns?.value,
+    filterBy
+  ]);
 
   useEffect(() => {
     if (isOpen) {
@@ -353,8 +248,8 @@ const SearchableCombo = ({ field, fieldName, register, fieldError, isInvalid, ha
   }, [isOpen, filteredOptions]);
 
   const loadOptions = async () => {
+    if (field.label === 'Select Location Use' && !filterBy) { setOptions([]); setLoading(false); return; }
     if (!field.dataSource?.file) return;
-    
     const columns = field.dataSource.columns;
     setLoading(true);
     try {
@@ -366,11 +261,30 @@ const SearchableCombo = ({ field, fieldName, register, fieldError, isInvalid, ha
       
       const csvText = await response.text();
       
+      // Robust CSV parsing (handles quoted fields)
+      function parseCSVLine(line) {
+        const result = [];
+        let current = '';
+        let inQuotes = false;
+        for (let i = 0; i < line.length; i++) {
+          const char = line[i];
+          if (char === '"') {
+            inQuotes = !inQuotes;
+          } else if (char === ',' && !inQuotes) {
+            result.push(current);
+            current = '';
+          } else {
+            current += char;
+          }
+        }
+        result.push(current);
+        return result;
+      }
+
       const lines = csvText.split('\n');
-      const headers = lines[0].split(',');
-      
+      const headers = parseCSVLine(lines[0]);
       let data = lines.slice(1).map(line => {
-        const values = line.split(',');
+        const values = parseCSVLine(line);
         const row = {};
         headers.forEach((header, index) => {
           row[header.trim()] = values[index]?.trim() || '';
@@ -379,18 +293,36 @@ const SearchableCombo = ({ field, fieldName, register, fieldError, isInvalid, ha
       }).filter(row => row.active === 'TRUE');
 
       // If this is the Select Location Use field and filterBy is set, filter by first word or part before dash
-      if (field.label === 'Select a Location Use' && filterBy) {
+      if (field.label === 'Select Location Use' && filterBy) {
         data = data.filter(row => {
           // Build the display value as it will be shown
           let displayValue = '';
           if (columns.display.includes('CONCATENATE')) {
-            const matches = columns.display.match(/[A-Z]\d+/g);
-            if (matches) {
-              const displayCols = matches.map(match => {
-                const colIndex = match.charCodeAt(0) - 65;
-                return headers[colIndex];
-              });
-              displayValue = displayCols
+            // Parse CONCATENATE(description_1," - ",description_2) format
+            const concatenateMatch = columns.display.match(/CONCATENATE\(([^)]+)\)/);
+            if (concatenateMatch) {
+              const innerContent = concatenateMatch[1];
+              // Split by comma and handle quoted strings
+              const parts = [];
+              let current = '';
+              let inQuotes = false;
+              for (let i = 0; i < innerContent.length; i++) {
+                const char = innerContent[i];
+                if (char === '"') {
+                  inQuotes = !inQuotes;
+                } else if (char === ',' && !inQuotes) {
+                  parts.push(current.trim());
+                  current = '';
+                } else {
+                  current += char;
+                }
+              }
+              parts.push(current.trim());
+              
+              // Extract column names (skip quoted strings)
+              const columnNames = parts.filter(part => !part.startsWith('"') && !part.endsWith('"'));
+              
+              displayValue = columnNames
                 .map(col => row[col])
                 .filter(val => val && val.length > 0)
                 .join(' - ');
@@ -406,58 +338,90 @@ const SearchableCombo = ({ field, fieldName, register, fieldError, isInvalid, ha
           }
           // Extract first word or part before dash
           const firstPart = displayValue.split(/[- ]/)[0];
-          return firstPart === filterBy;
+          return firstPart.toLowerCase() === filterBy.toLowerCase();
         });
       }
 
-      // Apply the formatting formula
-      const formattedOptions = data.map(row => {
-        if (columns?.display) {
-          // Handle the DISTINCT formula format
-          if (columns.display.includes('DISTINCT')) {
-            // Extract column name from DISTINCT(description_1) format
-            const match = columns.display.match(/DISTINCT\(([^)]+)\)/);
-            if (match) {
-              const colName = match[1];
-              return row[colName];
+      // Apply the formatting formula for display and construct backing value
+      const parseConcatenate = (formula, headers) => {
+        // Map Excel-style references to actual header names if possible
+        const excelToHeader = {
+          'E2': 'value_1',
+          'F2': 'value_2',
+          'G2': 'value_3',
+          'H2': 'description_1',
+          'I2': 'description_2',
+          'J2': 'description_3',
+        };
+        const parts = [];
+        const excelRegex = /([A-Z]\d+)/g;
+        const headerRegex = /([a-zA-Z0-9_]+)/g;
+        let match;
+        if (formula.match(excelRegex)) {
+          while ((match = excelRegex.exec(formula)) !== null) {
+            const excelRef = match[1];
+            if (excelToHeader[excelRef] && headers.includes(excelToHeader[excelRef])) {
+              parts.push(excelToHeader[excelRef]);
+            } else {
+              // Fallback to index-based mapping
+              const colIndex = excelRef.charCodeAt(0) - 65;
+              parts.push(headers[colIndex]);
             }
           }
-          // Handle the CONCATENATE formula format
-          if (columns.display.includes('CONCATENATE')) {
-            // Extract column names from the formula
-            const matches = columns.display.match(/[A-Z]\d+/g);
-            if (matches) {
-              const displayCols = matches.map(match => {
-                // Convert Excel column reference to column name
-                const colIndex = match.charCodeAt(0) - 65; // A=0, B=1, etc.
-                return headers[colIndex];
-              });
-              // Only include non-empty values
-              return displayCols
-                .map(col => row[col])
-                .filter(val => val && val.length > 0)
-                .join(' - ');
-            }
-          } else {
-            // Handle comma-separated column names
-            const displayCols = columns.display.split(',').map(col => col.trim());
-            return displayCols
-              .map(col => row[col])
-              .filter(val => val && val.length > 0)
-              .join(' - ');
-          }
+        } else {
+          const inner = formula.replace(/^CONCATENATE\(/, '').replace(/\)$/,'');
+          const headerMatches = Array.from(inner.matchAll(headerRegex));
+          headerMatches.forEach(m => {
+            if (headers.includes(m[1])) parts.push(m[1]);
+          });
         }
-        return row[columns?.value] || row[headers[0]];
+        return parts;
+      };
+
+      const formattedOptions = data.map(row => {
+        let displayValue = '';
+        let backingValue = '';
+        // Display value
+        if (columns?.display && columns.display.includes('CONCATENATE')) {
+          const displayParts = parseConcatenate(columns.display, headers);
+          displayValue = displayParts.map(col => row[col]).filter(Boolean).join(' - ');
+        } else if (columns?.display && columns.display.includes('DISTINCT')) {
+          // Extract the column name from DISTINCT(column_name)
+          const match = columns.display.match(/DISTINCT\(([^)]+)\)/);
+          if (match) {
+            const columnName = match[1];
+            displayValue = row[columnName] || '';
+          }
+        } else if (columns?.display) {
+          displayValue = row[columns.display] || '';
+        }
+        // Backing value
+        if (columns?.value && columns.value.includes('CONCATENATE')) {
+          // Find separator (e.g., '||')
+          let sep = '||';
+          const sepMatch = columns.value.match(/","(.*?)","/);
+          if (sepMatch) sep = sepMatch[1];
+          const valueParts = parseConcatenate(columns.value, headers);
+          backingValue = valueParts.map(col => row[col]).filter(Boolean).join(sep);
+        } else if (columns?.value) {
+          backingValue = row[columns.value] || '';
+        }
+        return { displayValue, backingValue };
       });
       
       // Create distinct options if DISTINCT is specified
       let finalOptions;
       if (columns?.display?.includes('DISTINCT')) {
         const distinctMap = new Map();
-        formattedOptions.forEach((display, index) => {
-          if (display && display.trim()) {
-            if (!distinctMap.has(display)) {
-              distinctMap.set(display, display);
+        formattedOptions.forEach((option, index) => {
+          if (option.displayValue && option.displayValue.trim()) {
+            if (!distinctMap.has(option.displayValue)) {
+              if (!option.backingValue) {
+                // console.warn('DISTINCT: Empty backing value for label', option.displayValue, 'at row', index, option);
+              } else {
+                // console.log('DISTINCT: Setting label', option.displayValue, 'to value', option.backingValue);
+              }
+              distinctMap.set(option.displayValue, option.backingValue);
             }
           }
         });
@@ -465,18 +429,15 @@ const SearchableCombo = ({ field, fieldName, register, fieldError, isInvalid, ha
           value: value,
           label: label
         }));
-        if (field.label === 'Select a Location Type') {
-          console.log('Final distinct options for Select a Location Type:', finalOptions);
-        }
       } else {
-        finalOptions = formattedOptions.map((display, index) => ({
-          value: data[index][columns?.value || headers[0]],
-          label: display
+        finalOptions = formattedOptions.map((option, index) => ({
+          value: option.backingValue,
+          label: option.displayValue
         }));
       }
       setOptions(finalOptions);
     } catch (error) {
-      console.error('Error loading options:', error);
+      // console.error('Error loading options:', error);
     } finally {
       setLoading(false);
     }
@@ -491,109 +452,134 @@ const SearchableCombo = ({ field, fieldName, register, fieldError, isInvalid, ha
     if (setValue) {
       setValue(fieldName, option.value, { shouldDirty: true, shouldTouch: true, shouldValidate: true });
     }
+    // Track the backing value and display label
+    if (onBackingValueChange) {
+      onBackingValueChange(fieldName, option.value, option.label);
+    }
+    if (onActiveChange) onActiveChange(fieldName, false);
   };
 
+  // Sync selectedValue with form value
+  useEffect(() => {
+    // Try to get the value from the form (if available)
+    if (register && typeof register === 'function') {
+      const input = document.querySelector(`input[name='${fieldName}']`);
+      if (input && input.value !== selectedValue) {
+        setSelectedValue(input.value);
+      }
+    }
+  }, [fieldName, register]);
+
   return (
-    <div className="mb-4 relative">
-      <label className="block text-sm font-medium text-gray-700 mb-1 text-left">
-        {field.label}
-        {field.required && <span className="text-red-500">*</span>}
-      </label>
-      
-      <div className="relative">
-        <div className="flex items-center">
-          <input
-            name="incidentTypeSearchXyz123"
-            type="text"
-            value={searchTerm}
-            readOnly={readOnly}
-            onMouseDown={e => {
-              if (readOnly) {
-                setReadOnly(false);
+    <>
+      <div className="mb-4 relative">
+        <label className="block text-sm font-medium text-gray-700 mb-1 text-left">
+          {field.label}
+          {field.required && <span className="text-red-500">*</span>}
+        </label>
+        
+        <div className="relative">
+          <div className="flex items-center">
+            <input
+              name={fieldName}
+              type="text"
+              value={searchTerm}
+              readOnly={readOnly}
+              onMouseDown={e => {
+                if (readOnly) {
+                  setReadOnly(false);
+                  setIsTyping(false);
+                  setIsOpen(true);
+                  e.preventDefault();
+                  e.target.focus();
+                } else {
+                  setIsTyping(false);
+                  setIsOpen(true);
+                }
+              }}
+              onBlur={(e) => {
+                // Delay hiding to allow click events to fire
+                setTimeout(() => {
+                  setReadOnly(true);
+                  setIsTyping(false);
+                  setIsOpen(false);
+                  if (onBlur) {
+                    onBlur(fieldName);
+                  }
+                }, 200);
+              }}
+              onFocus={() => {
                 setIsTyping(false);
                 setIsOpen(true);
-                e.preventDefault();
-                e.target.focus();
-              } else {
-                setIsTyping(false);
+                if (onFocus) {
+                  onFocus(fieldName);
+                }
+                if (onActiveChange) onActiveChange(fieldName, true);
+              }}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setIsTyping(true);
                 setIsOpen(true);
-              }
-            }}
-            onBlur={(e) => {
-              // Delay hiding to allow click events to fire
-              setTimeout(() => {
-                setReadOnly(true);
-                setIsTyping(false);
-                setIsOpen(false);
-              }, 200);
-            }}
-            onFocus={() => {
-              setIsTyping(false);
-              setIsOpen(true);
-            }}
-            onChange={(e) => {
-              setSearchTerm(e.target.value);
-              setIsTyping(true);
-              setIsOpen(true);
-            }}
-            placeholder="Search..."
-            autoComplete="new-password"
-            autoCorrect="off"
-            spellCheck={false}
-            className={`w-full px-3 py-2 pr-10 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-              isInvalid ? 'border-red-500' : 'border-gray-300'
-            }`}
-            disabled={field.label === 'Select a Location Use' && (!filterBy || filterBy === '')}
-          />
-          <SearchIcon className="absolute right-3 h-4 w-4 text-gray-400" />
+              }}
+              placeholder="Search..."
+              autoComplete="new-password"
+              autoCorrect="off"
+              spellCheck={false}
+              className={`w-full px-3 py-2 pr-10 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                isInvalid ? 'border-red-500' : 'border-gray-300'
+              }`}
+              disabled={disabled}
+            />
+            <SearchIcon className="absolute right-3 h-4 w-4 text-gray-400" />
+          </div>
+          
+          {isOpen && (
+            <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+              {loading ? (
+                <div className="px-3 py-2 text-gray-500">Loading...</div>
+              ) : filteredOptions.length > 0 ? (
+                filteredOptions.map((option, index) => {
+                  const isSelected = option.value === selectedValue;
+                  return (
+                    <button
+                      key={index}
+                      type="button"
+                      ref={isSelected ? selectedItemRef : null}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleSelect(option);
+                      }}
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                      }}
+                      className={`dropdown-option w-full px-3 py-2 text-left hover:bg-gray-100 focus:bg-gray-100 focus:outline-none${isSelected ? ' bg-blue-50 font-semibold' : ''}`}
+                    >
+                      {option.label}
+                    </button>
+                  );
+                })
+              ) : (
+                <div className="px-3 py-2 text-gray-500">No options found</div>
+              )}
+            </div>
+          )}
         </div>
         
-        {isOpen && (
-          <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
-            {loading ? (
-              <div className="px-3 py-2 text-gray-500">Loading...</div>
-            ) : filteredOptions.length > 0 ? (
-              filteredOptions.map((option, index) => {
-                const isSelected = option.value === selectedValue;
-                return (
-                  <button
-                    key={index}
-                    type="button"
-                    ref={isSelected ? selectedItemRef : null}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      handleSelect(option);
-                    }}
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                    }}
-                    className={`dropdown-option w-full px-3 py-2 text-left hover:bg-gray-100 focus:bg-gray-100 focus:outline-none${isSelected ? ' bg-blue-50 font-semibold' : ''}`}
-                  >
-                    {option.label}
-                  </button>
-                );
-              })
-            ) : (
-              <div className="px-3 py-2 text-gray-500">No options found</div>
-            )}
-          </div>
+        <input
+          type="hidden"
+          {...register(fieldName, { 
+            required: field.required,
+            value: selectedValue
+          })}
+        />
+        
+        {isInvalid && (
+          <p className="text-red-500 text-sm mt-1">{fieldError}</p>
         )}
       </div>
-      
-      <input
-        type="hidden"
-        {...register(fieldName, { 
-          required: field.required,
-          value: selectedValue
-        })}
-      />
-      
-      {isInvalid && (
-        <p className="text-red-500 text-sm mt-1">{fieldError}</p>
-      )}
-    </div>
+    </>
   );
 };
 
@@ -601,6 +587,12 @@ const FormStep = ({ step, formData, defaultData, onSubmit, onPrevious, showPrevi
   const [errors, setErrors] = useState({});
   const [collapsedSections, setCollapsedSections] = useState({});
   const [units, setUnits] = useState([]);
+  const [focusedField, setFocusedField] = useState(null);
+  const [lastFocusedField, setLastFocusedField] = useState(null);
+  const [backingValues, setBackingValues] = useState({});
+  const [locationTypeDisplay, setLocationTypeDisplay] = useState('');
+  
+
   const { register, handleSubmit, formState: { isValid }, setValue, watch, getValues } = useForm({
     mode: 'onChange'
   });
@@ -608,14 +600,6 @@ const FormStep = ({ step, formData, defaultData, onSubmit, onPrevious, showPrevi
   const formValues = watch();
   const selectedLocationType = formValues?.locationSection?.locationType;
   
-  // Debug logging to see what value is being watched
-  useEffect(() => {
-    console.log('formValues:', formValues);
-    console.log('selectedLocationType value:', selectedLocationType);
-    console.log('selectedLocationType type:', typeof selectedLocationType);
-    console.log('selectedLocationType truthy:', !!selectedLocationType);
-  }, [selectedLocationType, formValues]);
-
   // Initialize with one unit if this is a multi-unit step
   useEffect(() => {
     if (step.allowMultipleUnits && units.length === 0) {
@@ -1002,7 +986,7 @@ const FormStep = ({ step, formData, defaultData, onSubmit, onPrevious, showPrevi
             </label>
             <div className="space-y-2">
               {field.dataSource ? (
-                <CheckboxArray
+                <MultiSelect
                   field={field}
                   fieldName={fieldName}
                   register={register}
@@ -1151,31 +1135,62 @@ const FormStep = ({ step, formData, defaultData, onSubmit, onPrevious, showPrevi
         );
 
       case 'searchable-combo':
-        if (field.label === 'Select a Location Use') {
+        // For all incident type combos and location type, pass the handlers
+        if (
+          fieldName.endsWith('incidentType1') ||
+          fieldName.endsWith('incidentType2') ||
+          fieldName.endsWith('incidentType3') ||
+          field.label === 'Select a Location Type'
+        ) {
           return (
             <SearchableCombo
               key={fieldName}
               field={field}
               fieldName={fieldName}
               register={register}
-              fieldError={errors[field.name]}
-              isInvalid={!!errors[field.name]}
+              fieldError={errors[fieldName]}
+              isInvalid={!!errors[fieldName]}
               handleFieldChange={handleFieldChange}
-              filterBy={selectedLocationType}
               setValue={setValue}
+              onFocus={(fieldName) => setLastFocusedField(fieldName)}
+              onBackingValueChange={(fieldName, value, label) => {
+                setBackingValues(prev => ({ ...prev, [fieldName]: value }));
+                if (field.label === 'Select a Location Type') setLocationTypeDisplay(label);
+              }}
             />
           );
         }
+        if (field.label === 'Select Location Use') {
+          return (
+            <SearchableCombo
+              key={fieldName}
+              field={field}
+              fieldName={fieldName}
+              register={register}
+              fieldError={errors[fieldName]}
+              isInvalid={!!errors[fieldName]}
+              handleFieldChange={handleFieldChange}
+              filterBy={locationTypeDisplay}
+              setValue={setValue}
+              onFocus={(fieldName) => setLastFocusedField(fieldName)}
+              onBackingValueChange={(fieldName, value) => setBackingValues(prev => ({ ...prev, [fieldName]: value }))}
+              disabled={!locationTypeDisplay}
+            />
+          );
+        }
+        // Default
         return (
           <SearchableCombo
             key={fieldName}
             field={field}
             fieldName={fieldName}
             register={register}
-            fieldError={errors[field.name]}
-            isInvalid={!!errors[field.name]}
+            fieldError={errors[fieldName]}
+            isInvalid={!!errors[fieldName]}
             handleFieldChange={handleFieldChange}
             setValue={setValue}
+            onFocus={(fieldName) => setLastFocusedField(fieldName)}
+            onBackingValueChange={(fieldName, value) => setBackingValues(prev => ({ ...prev, [fieldName]: value }))}
           />
         );
 
@@ -1561,7 +1576,17 @@ const FormStep = ({ step, formData, defaultData, onSubmit, onPrevious, showPrevi
       <form onSubmit={(e) => { e.preventDefault(); handleFormSubmit({}); }} className="space-y-6">
         {renderFields()}
         
-        <div className="flex justify-between space-x-4 pt-6 border-t">
+        {/* Status Bar */}
+        {lastFocusedField && (
+          <div className="fixed bottom-0 left-0 right-0 bg-gray-800 text-white p-2 text-sm border-t border-gray-600 z-50">
+            <span className="font-medium">Field:</span> {lastFocusedField}
+            {backingValues[lastFocusedField] && (
+              <span className="ml-4"><span className="font-medium">Backing Value:</span> {backingValues[lastFocusedField]}</span>
+            )}
+          </div>
+        )}
+        
+        <div className="flex justify-between space-x-4 pt-6 border-t mb-16">
           {showPrevious && (
             <button
               type="button"
@@ -1584,4 +1609,4 @@ const FormStep = ({ step, formData, defaultData, onSubmit, onPrevious, showPrevi
   );
 };
 
-export default FormStep; 
+export default FormStep;
