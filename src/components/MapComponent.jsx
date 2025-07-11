@@ -73,7 +73,7 @@ const MapComponent = ({ allowPinDrop = false, allowPolygon = false }) => {
         )}
       </div>
 
-      <div className="border rounded-lg overflow-hidden">
+      <div className="border overflow-hidden">
         <MapContainer
           center={[40.7128, -74.0060]} // New York coordinates
           zoom={13}

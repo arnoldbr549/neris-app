@@ -20,7 +20,8 @@ function App() {
       .then(data => {
         setWorkflowData(data)
         if (data?.workflow?.pages?.length > 0) {
-          setCurrentPage(data.workflow.pages[0].id)
+          const firstPage = data.workflow.pages[0].id;
+          setCurrentPage(firstPage)
         } else {
           setError('No pages found in workflow data.')
         }
@@ -28,13 +29,22 @@ function App() {
       .catch(e => setError(e.message))
   }, [])
 
-  const onStepComplete = (stepId, stepData) => {
-    setFormData(prev => ({ ...prev, [stepId]: stepData }))
-    setWorkflowState(prev => ({ ...prev, currentStep: prev.currentStep + 1 }))
+  useEffect(() => {
+    setWorkflowState(prev => ({ ...prev, currentStep: 0 }));
+  }, [currentPage]);
+
+  const onStepComplete = (stepId, stepData, stepDelta = 1) => {
+
+    setFormData(prev => ({ ...prev, [stepId]: stepData }));
+    setWorkflowState(prev => {
+      const newState = { ...prev, currentStep: prev.currentStep + stepDelta };
+
+      return newState;
+    });
   }
   const onPageChange = (pageId) => {
     setCurrentPage(pageId)
-    setWorkflowState({ currentStep: 0 })
+    // No need to reset currentStep here; useEffect will handle it
   }
   const onBack = () => {
     setWorkflowState(prev => ({ ...prev, currentStep: Math.max(prev.currentStep - 1, 0) }))

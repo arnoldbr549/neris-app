@@ -14,19 +14,28 @@ const WorkflowEngine = ({
   onPageChange,
   onBack
 }) => {
-  const [currentStepIndex, setCurrentStepIndex] = useState(0);
+
   const [stepData, setStepData] = useState({});
 
   const currentPageData = workflowData.workflow.pages.find(page => page.id === currentPage);
-  const currentStep = currentPageData?.steps?.[currentStepIndex];
 
-  useEffect(() => {
-    setCurrentStepIndex(workflowState.currentStep);
-  }, [workflowState.currentStep]);
+  const currentStep = currentPageData?.steps?.[workflowState.currentStep];
+
+  // Defensive check AFTER all hooks
+  if (!currentStep) {
+    return (
+      <div className="text-center py-8">
+        <h2 className="text-xl font-semibold text-gray-900 mb-4">Step not found</h2>
+        <p className="text-gray-600">The requested workflow step could not be found.</p>
+      </div>
+    );
+  }
 
   const handleStepSubmit = (data) => {
     const newStepData = { ...stepData, ...data };
     setStepData(newStepData);
+
+
 
     if (currentStep.type === 'page-reference') {
       // Navigate to the referenced page
@@ -36,8 +45,27 @@ const WorkflowEngine = ({
       // Workflow completed
       alert('Workflow completed successfully!');
     } else {
-      // Move to next step
-      onStepComplete(currentStep.id, newStepData);
+      // Check if next step exists in current page
+      const nextStepId = currentStep.next;
+      const nextStepIndex = currentPageData.steps.findIndex(step => step.id === nextStepId);
+      
+      if (nextStepIndex !== -1) {
+        // Next step exists in current page
+        onStepComplete(currentStep.id, newStepData);
+      } else {
+        // Next step is in a different page, find which page contains it
+        const targetPage = workflowData.workflow.pages.find(page => 
+          page.steps.some(step => step.id === nextStepId)
+        );
+        
+        if (targetPage) {
+          // Navigate to the page containing the next step
+          onPageChange(targetPage.id);
+        } else {
+          console.error('Next step not found in any page:', nextStepId);
+          alert('Navigation error: Next step not found');
+        }
+      }
     }
   };
 
@@ -57,14 +85,14 @@ const WorkflowEngine = ({
   };
 
   const handleBack = () => {
-    if (currentStepIndex > 0) {
-      setCurrentStepIndex(currentStepIndex - 1);
+    if (workflowState.currentStep > 0) {
+      onStepComplete(currentStep.id, stepData, -1); // Go back one step
     } else {
       onBack();
     }
   };
 
-  const canGoBack = currentStepIndex > 0 || workflowState.pageHistory.length > 0;
+  const canGoBack = workflowState.currentStep > 0 || workflowState.pageHistory?.length > 0;
 
   if (!currentPageData || !currentStep) {
     return (
@@ -82,7 +110,7 @@ const WorkflowEngine = ({
           <FormStep
             step={currentStep}
             formData={formData}
-            onSubmit={handleStepSubmit}
+            onSubmit={(data) => { handleStepSubmit(data); }}
             onPrevious={handleBack}
             showPrevious={currentPage === 'incident-times-units'}
           />
@@ -109,6 +137,8 @@ const WorkflowEngine = ({
           <ActionStep
             step={currentStep}
             onSubmit={handleStepSubmit}
+            formData={formData}
+            stepData={stepData}
           />
         );
 
@@ -119,7 +149,7 @@ const WorkflowEngine = ({
             <p className="text-gray-600 mb-6">Preparing to navigate to the next section</p>
             <button
               onClick={() => handleStepSubmit({})}
-              className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors"
+              className="bg-blue-600 text-white px-6 py-2 hover:bg-blue-700 transition-colors"
             >
               Continue
             </button>
@@ -131,6 +161,19 @@ const WorkflowEngine = ({
           <div className="text-center py-8">
             <h2 className="text-2xl font-bold text-green-600 mb-4">Workflow Complete</h2>
             <p className="text-gray-600">The workflow has been completed successfully.</p>
+          </div>
+        );
+
+      case 'start':
+        return (
+          <div className="text-center py-8">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">{currentStep.label || 'Start'}</h2>
+            <button
+              onClick={() => handleStepSubmit({})}
+              className="bg-blue-600 text-white px-6 py-2 hover:bg-blue-700 transition-colors"
+            >
+              Continue
+            </button>
           </div>
         );
 
@@ -146,20 +189,35 @@ const WorkflowEngine = ({
 
   return (
     <div className="form-container">
-      <div className="bg-white rounded-lg shadow-sm border p-6">
+      <div className="bg-white shadow-sm border p-6">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-semibold text-gray-900">
             {currentStep.label}
           </h2>
-          {canGoBack && (
-            <button
-              onClick={handleBack}
-              className="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
-            >
-              <ChevronLeftIcon className="w-4 h-4 mr-1" />
-              Back
-            </button>
-          )}
+          <div className="flex items-center space-x-4">
+            {currentStep.type === 'form' && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (window.generateSampleData) {
+                    window.generateSampleData();
+                  }
+                }}
+                className="px-3 py-1 bg-gray-200 text-gray-700 border hover:bg-gray-300 text-xs"
+              >
+                GenData
+              </button>
+            )}
+            {canGoBack && (
+              <button
+                onClick={handleBack}
+                className="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                <ChevronLeftIcon className="w-4 h-4 mr-1" />
+                Back
+              </button>
+            )}
+          </div>
         </div>
 
         {renderStep()}

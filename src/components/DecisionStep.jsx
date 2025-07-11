@@ -17,7 +17,7 @@ const DecisionStep = ({ step, onDecision }) => {
           <button
             key={option.value}
             onClick={() => onDecision(option.value)}
-            className="w-full p-4 text-left border border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full p-4 text-left border border-gray-300 hover:border-blue-500 hover:bg-blue-50 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <div className="flex items-center justify-between">
               <span className="font-medium text-gray-900">

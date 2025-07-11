@@ -17,14 +17,8 @@ const MultiSelect = ({ field, fieldName, register, fieldError, isInvalid, handle
   }, [field.dataSource]);
 
   const loadOptions = async () => {
-    if (field.label === 'Select a Location Type') {
-      // eslint-disable-next-line no-console
-      console.log('loadOptions running for Select a Location Type');
-    }
-    if (field && field.dataSource && field.dataSource.columns) {
-      // eslint-disable-next-line no-console
-      console.log('loadOptions:', field.label, 'columns.display:', field.dataSource.columns.display);
-    }
+
+
     if (!field.dataSource?.file) return;
     
     const columns = field.dataSource.columns;
@@ -125,10 +119,7 @@ const MultiSelect = ({ field, fieldName, register, fieldError, isInvalid, handle
             finalOptions.push({ value: backingValue, label: displayValue });
           }
         });
-        if (field.label === 'Select a Location Type') {
-          // eslint-disable-next-line no-console
-          console.log('DISTINCT description/value pairs:', finalOptions);
-        }
+
       } else {
         finalOptions = formattedOptions.map((option, index) => ({
           value: data[index][columns?.value || headers[0]],
@@ -205,6 +196,7 @@ const MultiSelect = ({ field, fieldName, register, fieldError, isInvalid, handle
 
 // SearchableCombo Component
 const SearchableCombo = ({ field, fieldName, register, fieldError, isInvalid, handleFieldChange, filterBy, setValue, onFocus, onBlur, onBackingValueChange, onActiveChange, disabled }) => {
+  const dropdownRef = useRef(null);
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [options, setOptions] = useState([]);
@@ -346,12 +338,12 @@ const SearchableCombo = ({ field, fieldName, register, fieldError, isInvalid, ha
       const parseConcatenate = (formula, headers) => {
         // Map Excel-style references to actual header names if possible
         const excelToHeader = {
-          'E2': 'value_1',
-          'F2': 'value_2',
-          'G2': 'value_3',
-          'H2': 'description_1',
-          'I2': 'description_2',
-          'J2': 'description_3',
+          'E2': 'description_1',
+          'F2': 'description_2',
+          'G2': 'description_3',
+          'H2': 'value_1',
+          'I2': 'value_2',
+          'J2': 'value_3',
         };
         const parts = [];
         const excelRegex = /([A-Z]\d+)/g;
@@ -419,7 +411,7 @@ const SearchableCombo = ({ field, fieldName, register, fieldError, isInvalid, ha
               if (!option.backingValue) {
                 // console.warn('DISTINCT: Empty backing value for label', option.displayValue, 'at row', index, option);
               } else {
-                // console.log('DISTINCT: Setting label', option.displayValue, 'to value', option.backingValue);
+        
               }
               distinctMap.set(option.displayValue, option.backingValue);
             }
@@ -515,6 +507,15 @@ const SearchableCombo = ({ field, fieldName, register, fieldError, isInvalid, ha
                   onFocus(fieldName);
                 }
                 if (onActiveChange) onActiveChange(fieldName, true);
+                
+                // Scroll to top if no item is selected
+                if (!selectedValue) {
+                  setTimeout(() => {
+                    if (dropdownRef.current) {
+                      dropdownRef.current.scrollTop = 0;
+                    }
+                  }, 100);
+                }
               }}
               onChange={(e) => {
                 setSearchTerm(e.target.value);
@@ -522,9 +523,10 @@ const SearchableCombo = ({ field, fieldName, register, fieldError, isInvalid, ha
                 setIsOpen(true);
               }}
               placeholder="Search..."
-              autoComplete="new-password"
+              autoComplete="off"
               autoCorrect="off"
               spellCheck={false}
+              data-form-type="other"
               className={`w-full px-3 py-2 pr-10 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                 isInvalid ? 'border-red-500' : 'border-gray-300'
               }`}
@@ -534,7 +536,7 @@ const SearchableCombo = ({ field, fieldName, register, fieldError, isInvalid, ha
           </div>
           
           {isOpen && (
-            <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+            <div ref={dropdownRef} className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
               {loading ? (
                 <div className="px-3 py-2 text-gray-500">Loading...</div>
               ) : filteredOptions.length > 0 ? (
@@ -591,6 +593,8 @@ const FormStep = ({ step, formData, defaultData, onSubmit, onPrevious, showPrevi
   const [lastFocusedField, setLastFocusedField] = useState(null);
   const [backingValues, setBackingValues] = useState({});
   const [locationTypeDisplay, setLocationTypeDisplay] = useState('');
+  
+
   
 
   const { register, handleSubmit, formState: { isValid }, setValue, watch, getValues } = useForm({
@@ -1266,75 +1270,105 @@ const FormStep = ({ step, formData, defaultData, onSubmit, onPrevious, showPrevi
                 {field.required && <span className="text-red-500">*</span>}
               </label>
               <div className="space-y-4">
-                {values.map((unit, idx) => (
-                  <div key={idx} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-                    <div className="flex items-center justify-end mb-3">
-                      {values.length > minItems && (
-                        <button 
-                          type="button" 
-                          onClick={() => removeItem(idx)} 
-                          className="p-1 text-red-500 hover:text-red-700"
-                        >
-                          <TrashIcon className="h-4 w-4" />
-                        </button>
+                {values.map((unit, idx) => {
+                  const unitKey = `unit-${idx}`;
+                  const isCollapsed = collapsedSections[unitKey];
+                  const unitDesignation = unit.designation || '';
+                  const canCollapse = values.length > 1;
+                  
+                  return (
+                    <div key={idx} className="mb-6 border border-gray-200 rounded-lg">
+                      <div className="flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100">
+                        {canCollapse ? (
+                          <button
+                            type="button"
+                            onClick={() => toggleSection(unitKey)}
+                            className="flex items-center justify-between w-full text-left font-medium"
+                          >
+                            <span>{unitDesignation}</span>
+                            {isCollapsed ? (
+                              <ChevronRightIcon className="h-5 w-5 text-gray-500" />
+                            ) : (
+                              <ChevronDownIcon className="h-5 w-5 text-gray-500" />
+                            )}
+                          </button>
+                        ) : (
+                          <div className="w-full text-left font-medium">
+                            <span>{unitDesignation}</span>
+                          </div>
+                        )}
+                        {values.length > minItems && (
+                          <button
+                            type="button"
+                            onClick={() => removeItem(idx)}
+                            className="ml-2 p-1 text-red-500 hover:text-red-700 hover:bg-red-100 rounded"
+                          >
+                            <TrashIcon className="h-4 w-4" />
+                          </button>
+                        )}
+                      </div>
+                      
+                      {(!canCollapse || !isCollapsed) && (
+                        <div className="p-4 bg-white rounded-b-lg">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {field.item.fields.map(subField => {
+                              const subFieldName = `${field.name}.${idx}.${subField.name}`;
+                              const subFieldError = errors[subFieldName];
+                              const isSubFieldInvalid = subFieldError && subFieldError !== true;
+                              
+                              return (
+                                <div key={subFieldName} className="mb-3">
+                                  <label className="block text-sm font-medium text-gray-700 mb-1 text-left">
+                                    {subField.label}
+                                    {subField.required && <span className="text-red-500">*</span>}
+                                  </label>
+                                  {subField.type === 'text' && (
+                                    <input
+                                      type="text"
+                                      value={unit[subField.name] || ''}
+                                      onChange={e => handleItemFieldChange(idx, subField.name, e.target.value)}
+                                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                                        isSubFieldInvalid ? 'border-red-500' : 'border-gray-300'
+                                      }`}
+                                      placeholder={subField.placeholder || ''}
+                                    />
+                                  )}
+                                  {subField.type === 'number' && (
+                                    <input
+                                      type="number"
+                                      value={unit[subField.name] || ''}
+                                      onChange={e => handleItemFieldChange(idx, subField.name, e.target.value)}
+                                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                                        isSubFieldInvalid ? 'border-red-500' : 'border-gray-300'
+                                      }`}
+                                      min={subField.min}
+                                      max={subField.max}
+                                      step={subField.step}
+                                      placeholder={subField.placeholder || ''}
+                                    />
+                                  )}
+                                  {subField.type === 'datetime-local' && (
+                                    <input
+                                      type="datetime-local"
+                                      value={unit[subField.name] || ''}
+                                      onChange={e => handleItemFieldChange(idx, subField.name, e.target.value)}
+                                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                                        isSubFieldInvalid ? 'border-red-500' : 'border-gray-300'
+                                      }`}
+                                    />
+                                  )}
+                                  {isSubFieldInvalid && (
+                                    <p className="text-red-500 text-sm mt-1">{subFieldError}</p>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
                       )}
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {field.item.fields.map(subField => {
-                        const subFieldName = `${field.name}.${idx}.${subField.name}`;
-                        const subFieldError = errors[subFieldName];
-                        const isSubFieldInvalid = subFieldError && subFieldError !== true;
-                        
-                        return (
-                          <div key={subFieldName} className="mb-3">
-                            <label className="block text-sm font-medium text-gray-700 mb-1 text-left">
-                              {subField.label}
-                              {subField.required && <span className="text-red-500">*</span>}
-                            </label>
-                            {subField.type === 'text' && (
-                              <input
-                                type="text"
-                                value={unit[subField.name] || ''}
-                                onChange={e => handleItemFieldChange(idx, subField.name, e.target.value)}
-                                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                                  isSubFieldInvalid ? 'border-red-500' : 'border-gray-300'
-                                }`}
-                                placeholder={subField.placeholder || ''}
-                              />
-                            )}
-                            {subField.type === 'number' && (
-                              <input
-                                type="number"
-                                value={unit[subField.name] || ''}
-                                onChange={e => handleItemFieldChange(idx, subField.name, e.target.value)}
-                                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                                  isSubFieldInvalid ? 'border-red-500' : 'border-gray-300'
-                                }`}
-                                min={subField.min}
-                                max={subField.max}
-                                step={subField.step}
-                                placeholder={subField.placeholder || ''}
-                              />
-                            )}
-                            {subField.type === 'datetime-local' && (
-                              <input
-                                type="datetime-local"
-                                value={unit[subField.name] || ''}
-                                onChange={e => handleItemFieldChange(idx, subField.name, e.target.value)}
-                                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                                  isSubFieldInvalid ? 'border-red-500' : 'border-gray-300'
-                                }`}
-                              />
-                            )}
-                            {isSubFieldInvalid && (
-                              <p className="text-red-500 text-sm mt-1">{subFieldError}</p>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
               <button 
                 type="button" 
@@ -1498,23 +1532,24 @@ const FormStep = ({ step, formData, defaultData, onSubmit, onPrevious, showPrevi
   };
 
   const renderUnit = (unit) => {
-    const unitDisplayName = unit.designation || `Unit ${units.indexOf(unit) + 1}`;
+    // Get the unit designation from form values
+    const unitDesignation = getValues(`respondingUnits.${unit.id}.designation`) || `Unit ${unit.id + 1}`;
     const unitKey = `unit-${unit.id}`;
     const isCollapsed = collapsedSections[unitKey];
 
     return (
-      <div key={unit.id} className="mb-6 border-2 border-blue-200 rounded-lg">
-        <div className="flex items-center justify-between px-4 py-3 bg-blue-50 hover:bg-blue-100">
+      <div key={unit.id} className="mb-6 border border-gray-200 rounded-lg">
+        <div className="flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100">
           <button
             type="button"
             onClick={() => toggleSection(unitKey)}
-            className="flex items-center justify-between w-full text-left font-medium text-blue-900"
+            className="flex items-center justify-between w-full text-left font-medium"
           >
-            <span>{unitDisplayName}</span>
+            <span>{unitDesignation}</span>
             {isCollapsed ? (
-              <ChevronRightIcon className="h-5 w-5 text-blue-500" />
+              <ChevronRightIcon className="h-5 w-5 text-gray-500" />
             ) : (
-              <ChevronDownIcon className="h-5 w-5 text-blue-500" />
+              <ChevronDownIcon className="h-5 w-5 text-gray-500" />
             )}
           </button>
           {units.length > 1 && (
@@ -1552,7 +1587,7 @@ const FormStep = ({ step, formData, defaultData, onSubmit, onPrevious, showPrevi
             className="w-full p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-gray-400 hover:bg-gray-50 flex items-center justify-center text-gray-600 hover:text-gray-800"
           >
             <PlusIcon className="h-5 w-5 mr-2" />
-            Add Responding Unit
+            Add Incident Times and Unit(s)
           </button>
         </div>
       );
@@ -1568,12 +1603,204 @@ const FormStep = ({ step, formData, defaultData, onSubmit, onPrevious, showPrevi
   };
 
   const handleFormSubmit = (data) => {
-    onSubmit(data);
+    // Get all form values from react-hook-form
+    const formValues = getValues();
+    onSubmit(formValues);
   };
+
+  const generateSampleData = () => {
+    // Random incident type values from the CSV
+    const randomIncidentTypes = [
+      'CONSTRUCTION_WASTE',
+      'OTHER_OUTSIDE_FIRE',
+      'TRASH_RUBBISH_FIRE',
+      'VEGETATION_GRASS_FIRE',
+      'WILDFIRE_WILDLAND',
+      'WILDFIRE_URBAN_INTERFACE',
+      'UTILITY_INFRASTRUCTURE_FIRE',
+      'DUMPSTER_OUTDOOR_CONTAINER_FIRE',
+      'ESS_FIRE',
+      'EXPLOSION',
+      'INFRASTRUCTURE_FIRE',
+      'STRUCTURAL_INVOLVEMENT_FIRE',
+      'ROOM_AND_CONTENTS_FIRE',
+      'CONFINED_COOKING_APPLIANCE_FIRE',
+      'CHIMNEY_FIRE',
+      'AIRCRAFT_FIRE',
+      'VEHICLE_FIRE_PASSENGER',
+      'VEHICLE_FIRE_COMMERCIAL',
+      'VEHICLE_FIRE_RV',
+      'VEHICLE_FIRE_FOOD_TRUCK',
+      'BOAT_PERSONAL_WATERCRAFT_BARGE_FIRE',
+      'POWERED_MOBILITY_DEVICE_FIRE',
+      'TRAIN_RAIL_FIRE',
+      'BOMB_THREAT_RESPONSE_SUSPICIOUS_PACKAGE',
+      'ELEC_POWER_LINE_DOWN_ARCHING_MALFUNC',
+      'ELEC_HAZARD_SHORT_CIRCUIT',
+      'MOTOR_VEHICLE_COLLISION',
+      'FUEL_SPILL_ODOR',
+      'GAS_LEAK_ODOR',
+      'CARBON_MONOXIDE_RELEASE',
+      'BIOLOGICAL_RELEASE_INCIDENT',
+      'RADIOACTIVE_RELEASE_INCIDENT',
+      'HAZMAT_RELEASE_TRANSPORT',
+      'HAZMAT_RELEASE_FACILITY',
+      'RUPTURE_WITHOUT_FIRE',
+      'NO_RUPTURE',
+      'ODOR',
+      'SMOKE_INVESTIGATION',
+      'ABDOMINAL_PAIN',
+      'ALLERGIC_REACTION_STINGS',
+      'BACK_PAIN_NON_TRAUMA',
+      'BREATHING_PROBLEMS',
+      'CARDIAC_ARREST',
+      'CHEST_PAIN_NON_TRAUMA',
+      'CONVULSIONS_SEIZURES',
+      'DIABETIC_PROBLEMS',
+      'HEADACHE',
+      'HEART_PROBLEMS',
+      'OVERDOSE',
+      'PANDEMIC_EPIDEMIC_OUTBREAK',
+      'PREGNANCY_CHILDBIRTH',
+      'PSYCHOLOGICAL_BEHAVIOR_ISSUES',
+      'SICK_CASE',
+      'STROKE_CVA',
+      'UNCONSCIOUS_VICTIM',
+      'WELL_PERSON_CHECK',
+      'ALTERED_MENTAL_STATUS',
+      'NAUSEA_VOMITING',
+      'UNKNOWN_PROBLEM',
+      'NO_APPROPRIATE_CHOICE',
+      'ANIMAL_BITES',
+      'ASSAULT',
+      'BURNS_EXPLOSION',
+      'CARBON_MONOXIDE_OTHER_INHALATION_INJURY',
+      'CHOKING',
+      'DROWNING_DIVING_SCUBA_ACCIDENT',
+      'ELECTROCUTION',
+      'EYE_TRAUMA',
+      'FALL',
+      'HEAT_COLD_EXPOSURE',
+      'INDUSTRIAL_INACCESSIBLE_ENTRAPMENT',
+      'POISONING',
+      'GUNSHOT_WOUND',
+      'HEMORRHAGE_LACERATION',
+      'STAB_PENETRATING_TRAUMA',
+      'OTHER_TRAUMATIC_INJURY',
+      'HEALTHCARE_PROFESSIONAL_ADMISSION',
+      'MEDICAL_ALARM',
+      'STANDBY_REQUEST',
+      'TRANSFER_INTERFACILITY',
+      'AIRMEDICAL_TRANSPORT',
+      'INTERCEPT_OTHER_UNIT',
+      'COMMUNITY_PUBLIC_HEALTH',
+      'LOST_PERSON',
+      'PERSON_IN_DISTRESS',
+      'CITIZEN_ASSIST_SERVICE_CALL',
+      'LIFT_ASSIST',
+      'FIRE_ALARM',
+      'GAS_ALARM',
+      'CO_ALARM',
+      'OTHER_ALARM',
+      'BOMB_SCARE',
+      'DAMAGE_ASSESSMENT',
+      'WEATHER_RESPONSE',
+      'MOVE_UP',
+      'STANDBY',
+      'DAMAGED_HYDRANT',
+      'BACKOUNTRY_RESCUE',
+      'CONFINED_SPACE_RESCUE',
+      'TRENCH',
+      'EXTRICATION_ENTRAPPED',
+      'HIGH_ANGLE_RESCUE',
+      'LOW_ANGLE_RESCUE',
+      'STEEP_ANGLE_RESCUE',
+      'LIMITED_NO_ACCESS',
+      'BUILDING_STRUCTURE_COLLAPSE',
+      'ELEVATOR_ESCALATOR_RESCUE',
+      'MOTOR_VEHICLE_EXTRICATION_ENTRAPPED',
+      'TRAIN_RAIL_COLLISION_DERAILMENT',
+      'AVIATION_COLLISION_CRASH',
+      'AVIATION_STANDBY',
+      'PERSON_IN_WATER_STANDING',
+      'PERSON_IN_WATER_SWIFTWATER',
+      'WATERCRAFT_IN_DISTRESS',
+      'INTENTIONAL_FALSE_ALARM',
+      'MALFUNCTIONING_ALARM',
+      'ACCIDENTAL_ALARM',
+      'OTHER_FALSE_CALL',
+      'NO_INCIDENT_FOUND_LOCATION_ERROR',
+      'CONTROLLED_BURNING_AUTHORIZED',
+      'SMOKE_FROM_NONHOSTILE_SOURCE',
+      'INVESTIGATE_HAZARDOUS_RELEASE',
+      'CANCELLED'
+    ];
+
+    // Get 3 random unique incident types
+    const shuffled = [...randomIncidentTypes].sort(() => 0.5 - Math.random());
+    const randomTypes = shuffled.slice(0, 3);
+
+    const sampleData = {
+      incidentType1: randomTypes[0],
+      principleIncidentType: true,
+      incidentType2: randomTypes[1],
+      incidentType3: randomTypes[2],
+      // Unit 1 - Engine
+      'respondingUnits.0.designation': 'Engine 1',
+      'respondingUnits.0.staffing': 4,
+      'respondingUnits.0.startingLatitude': 40.7128,
+      'respondingUnits.0.startingLongitude': -74.0060,
+      'respondingUnits.0.dispatchTime': '2024-01-15T08:30:00',
+      'respondingUnits.0.enrouteTime': '2024-01-15T08:32:00',
+      'respondingUnits.0.arrivalTime': '2024-01-15T08:38:00',
+      'respondingUnits.0.clearTime': '2024-01-15T09:15:00',
+      
+      // Unit 2 - Ladder
+      'respondingUnits.1.designation': 'Ladder 2',
+      'respondingUnits.1.staffing': 5,
+      'respondingUnits.1.startingLatitude': 40.7150,
+      'respondingUnits.1.startingLongitude': -74.0080,
+      'respondingUnits.1.dispatchTime': '2024-01-15T08:31:00',
+      'respondingUnits.1.enrouteTime': '2024-01-15T08:33:00',
+      'respondingUnits.1.arrivalTime': '2024-01-15T08:40:00',
+      'respondingUnits.1.clearTime': '2024-01-15T09:20:00',
+      
+      // Unit 3 - Rescue
+      'respondingUnits.2.designation': 'Rescue 3',
+      'respondingUnits.2.staffing': 6,
+      'respondingUnits.2.startingLatitude': 40.7100,
+      'respondingUnits.2.startingLongitude': -74.0040,
+      'respondingUnits.2.dispatchTime': '2024-01-15T08:32:00',
+      'respondingUnits.2.enrouteTime': '2024-01-15T08:35:00',
+      'respondingUnits.2.arrivalTime': '2024-01-15T08:42:00',
+      'respondingUnits.2.clearTime': '2024-01-15T09:25:00',
+      'callAndCommandSection.callProcessingBeginTime': '2024-01-15T08:28:00',
+      'callAndCommandSection.dispatchAnswerTime': '2024-01-15T08:29:00',
+      'callAndCommandSection.commandEstablishedTime': '2024-01-15T08:35:00',
+      'callAndCommandSection.dispatchArrivalTime': '2024-01-15T08:40:00',
+      'locationSection.locationMethod': 'point',
+      'locationSection.featureOutputType': 'address',
+      'locationSection.incidentLocationDifferent': false,
+      'locationSection.locationType': 'RESIDENTIAL',
+      'locationSection.locationUse': 'RESIDENTIAL - SINGLE FAMILY',
+      'locationSection.reasonForVacancy': 'OCCUPIED'
+    };
+
+    // Set all the sample data
+    Object.keys(sampleData).forEach(key => {
+      setValue(key, sampleData[key]);
+    });
+  };
+
+  // Make generateSampleData accessible to WorkflowEngine
+  React.useEffect(() => {
+    window.generateSampleData = generateSampleData;
+  }, []);
 
   return (
     <div className="max-w-4xl mx-auto p-6">
-      <form onSubmit={(e) => { e.preventDefault(); handleFormSubmit({}); }} className="space-y-6">
+
+      <form onSubmit={(e) => { e.preventDefault(); handleFormSubmit({}); }} className="space-y-4">
         {renderFields()}
         {/* Status Bar */}
         {lastFocusedField && (
@@ -1595,24 +1822,12 @@ const FormStep = ({ step, formData, defaultData, onSubmit, onPrevious, showPrevi
             </button>
           )}
           <div className="flex-1"></div>
-          {/* Show Submit button only on the second page */}
-          {step && step.id === 'incident-record-control' && (
-            <button
-              type="submit"
-              className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Submit
-            </button>
-          )}
-          {/* Otherwise show Next */}
-          {(!step || step.id !== 'incident-record-control') && (
-            <button
-              type="submit"
-              className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Next
-            </button>
-          )}
+          <button
+            type="submit"
+            className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Next
+          </button>
         </div>
       </form>
     </div>

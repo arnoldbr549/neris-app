@@ -6,11 +6,12 @@
     "pages": [
       {
         "id": "incident-basics",
-        "name": "Incident Basics",
+        "name": "Incident Information",
         "steps": [
           {
             "id": "select-incident-type",
             "type": "form",
+            "label": "Incident Information",
             "fields": [
               {
                 "name": "typesOfIncidentSection",
@@ -24,10 +25,10 @@
                     "required": true,
                     "dataSource": {
                       "file": "/value-sets/type_incident.csv",
-                      "format": "CONCATENATE(description_1,\" - \",description_2,\" - \",description_3)",
+                      "format": "CONCATENATE(E2,\" - \",F2,\" - \",G2)",
                       "columns": {
-                        "value": "CONCATENATE(value_1,\"||\",value_2,\"||\",value_3)",
-                        "display": "CONCATENATE(description_1,\" - \",description_2,\" - \",description_3)"
+                        "value": "value_3",
+                        "display": "CONCATENATE(E2,\" - \",F2,\" - \",G2)"
                       }
                     },
                     "validation": {
@@ -47,10 +48,10 @@
                     "required": false,
                     "dataSource": {
                       "file": "/value-sets/type_incident.csv",
-                      "format": "CONCATENATE(description_1,\" - \",description_2,\" - \",description_3)",
+                      "format": "CONCATENATE(E2,\" - \",F2,\" - \",G2)",
                       "columns": {
-                        "value": "CONCATENATE(value_1,\"||\",value_2,\"||\",value_3)",
-                        "display": "CONCATENATE(description_1,\" - \",description_2,\" - \",description_3)"
+                        "value": "value_3",
+                        "display": "CONCATENATE(E2,\" - \",F2,\" - \",G2)"
                       }
                     }
                   },
@@ -61,19 +62,50 @@
                     "required": false,
                     "dataSource": {
                       "file": "/value-sets/type_incident.csv",
-                      "format": "CONCATENATE(description_1,\" - \",description_2,\" - \",description_3)",
+                      "format": "CONCATENATE(E2,\" - \",F2,\" - \",G2)",
                       "columns": {
-                        "value": "CONCATENATE(value_1,\"||\",value_2,\"||\",value_3)",
-                        "display": "CONCATENATE(description_1,\" - \",description_2,\" - \",description_3)"
+                        "value": "value_3",
+                        "display": "CONCATENATE(E2,\" - \",F2,\" - \",G2)"
                       }
                     }
                   }
                 ]
               },
               {
+                "name": "callAndCommandSection",
+                "type": "section",
+                "label": "Incident Times and Unit(s)",
+                "fields": [
+                  {
+                    "name": "callProcessingBeginTime",
+                    "type": "datetime-local",
+                    "label": "Enter the Call Processing Begin Time",
+                    "required": true
+                  },
+                  {
+                    "name": "dispatchAnswerTime",
+                    "type": "datetime-local",
+                    "label": "Enter the Dispatch Answer Time",
+                    "required": true
+                  },
+                  {
+                    "name": "commandEstablishedTime",
+                    "type": "datetime-local",
+                    "label": "Enter the Command Established Time",
+                    "required": true
+                  },
+                  {
+                    "name": "dispatchArrivalTime",
+                    "type": "datetime-local",
+                    "label": "Enter the Dispatch Arrival Time",
+                    "required": true
+                  }
+                ]
+              },
+              {
                 "name": "respondingUnits",
                 "type": "array",
-                "label": "Incident Times and Unit(s)",
+                "label": "",
                 "item": {
                   "type": "object",
                   "fields": [
@@ -157,33 +189,9 @@
                 "removeButtonLabel": "Remove"
               },
               {
-                "name": "callProcessingBeginTime",
-                "type": "datetime-local",
-                "label": "Enter the Call Processing Begin Time",
-                "required": true
-              },
-              {
-                "name": "dispatchAnswerTime",
-                "type": "datetime-local",
-                "label": "Enter the Dispatch Answer Time",
-                "required": true
-              },
-              {
-                "name": "commandEstablishedTime",
-                "type": "datetime-local",
-                "label": "Enter the Command Established Time",
-                "required": true
-              },
-              {
-                "name": "dispatchArrivalTime",
-                "type": "datetime-local",
-                "label": "Enter the Dispatch Arrival Time",
-                "required": true
-              },
-              {
                 "name": "locationSection",
                 "type": "section",
-                "label": "Location Info",
+                "label": "Location",
                 "fields": [
                   {
                     "name": "locationMethod",
@@ -201,7 +209,7 @@
                     "label": "Show Interactive Map",
                     "conditional": {
                       "field": "locationSection.locationMethod",
-                      "value": "any"
+                      "value": "point"
                     }
                   },
                   {
@@ -266,7 +274,33 @@
                   }
                 ]
               }
-            ]
+            ],
+            "next": "submit-data"
+          }
+        ]
+      },
+      {
+        "id": "data-display",
+        "name": "Data Display",
+        "steps": [
+          {
+            "id": "submit-data",
+            "type": "action",
+            "label": "Submit",
+            "action": "submit_incident",
+            "next": "show-data"
+          },
+          {
+            "id": "show-data",
+            "type": "message",
+            "label": "Data Submitted",
+            "message": "DATA",
+            "next": "end"
+          },
+          {
+            "id": "end",
+            "type": "end",
+            "label": "End"
           }
         ]
       },
@@ -301,7 +335,15 @@
                   { "value": "closed", "label": "Closed" }
                 ]
               }
-            ]
+            ],
+            "next": "submit-incident-data"
+          },
+          {
+            "id": "submit-incident-data",
+            "type": "action",
+            "label": "Submit Incident Data",
+            "action": "submit_incident",
+            "next": "prompt-add-responding-unit"
           },
           {
             "id": "prompt-add-responding-unit",

@@ -18,7 +18,7 @@ const StepIndicator = ({ steps, currentStep, completedSteps }) => {
               isActive ? 'text-blue-600' : isCompleted ? 'text-green-600' : 'text-gray-400'
             }`}
           >
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium border-2 ${
+            <div className={`w-8 h-8 flex items-center justify-center text-sm font-medium border-2 ${
               isActive 
                 ? 'bg-blue-600 text-white border-blue-600' 
                 : isCompleted 

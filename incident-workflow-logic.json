@@ -71,9 +71,40 @@
                 }
               },
               {
+                "name": "callAndCommandSection",
+                "type": "section",
+                "label": "Incident Times and Unit(s)",
+                "fields": [
+                  {
+                    "name": "callProcessingBeginTime",
+                    "type": "datetime-local",
+                    "label": "Enter the Call Processing Begin Time",
+                    "required": true
+                  },
+                  {
+                    "name": "dispatchAnswerTime",
+                    "type": "datetime-local",
+                    "label": "Enter the Dispatch Answer Time",
+                    "required": true
+                  },
+                  {
+                    "name": "commandEstablishedTime",
+                    "type": "datetime-local",
+                    "label": "Enter the Command Established Time",
+                    "required": true
+                  },
+                  {
+                    "name": "dispatchArrivalTime",
+                    "type": "datetime-local",
+                    "label": "Enter the Dispatch Arrival Time",
+                    "required": true
+                  }
+                ]
+              },
+              {
                 "name": "respondingUnits",
                 "type": "array",
-                "label": "Responding Units",
+                "label": "",
                 "item": {
                   "type": "object",
                   "fields": [
@@ -155,37 +186,6 @@
                 "minItems": 1,
                 "addButtonLabel": "Add Responding Unit",
                 "removeButtonLabel": "Remove"
-              },
-              {
-                "name": "callAndCommandSection",
-                "type": "section",
-                "label": "Call and Command",
-                "fields": [
-                  {
-                    "name": "callProcessingBeginTime",
-                    "type": "datetime-local",
-                    "label": "Enter the Call Processing Begin Time",
-                    "required": true
-                  },
-                  {
-                    "name": "dispatchAnswerTime",
-                    "type": "datetime-local",
-                    "label": "Enter the Dispatch Answer Time",
-                    "required": true
-                  },
-                  {
-                    "name": "commandEstablishedTime",
-                    "type": "datetime-local",
-                    "label": "Enter the Command Established Time",
-                    "required": true
-                  },
-                  {
-                    "name": "dispatchArrivalTime",
-                    "type": "datetime-local",
-                    "label": "Enter the Dispatch Arrival Time",
-                    "required": true
-                  }
-                ]
               },
               {
                 "name": "locationSection",
@@ -321,7 +321,15 @@
                   { "value": "closed", "label": "Closed" }
                 ]
               }
-            ]
+            ],
+            "next": "submit-incident-data"
+          },
+          {
+            "id": "submit-incident-data",
+            "type": "action",
+            "label": "Submit Incident Data",
+            "action": "submit_incident",
+            "next": "prompt-add-responding-unit"
           },
           {
             "id": "prompt-add-responding-unit",
