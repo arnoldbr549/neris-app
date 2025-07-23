@@ -5,6 +5,7 @@ import nerisLogo from './assets/neris_logo.jpg'
 import pulsiamLogo from './assets/puslaim_horizontal.png'
 
 function App() {
+  const base = import.meta.env.BASE_URL;
   const [workflowData, setWorkflowData] = useState(null)
   const [currentPage, setCurrentPage] = useState('')
   const [formData, setFormData] = useState({})
@@ -12,7 +13,8 @@ function App() {
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    fetch('/incident-workflow-logic.json')
+    const configURL = new URL(`${base}incident-workflow-logic.json`, window.location.origin);
+    fetch(configURL.href)
       .then(res => {
         if (!res.ok) throw new Error('Failed to load workflow JSON')
         return res.json()

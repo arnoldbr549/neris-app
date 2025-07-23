@@ -24,7 +24,7 @@
                     "label": "Select an Incident Type",
                     "required": true,
                     "dataSource": {
-                      "file": "/value-sets/type_incident.csv",
+                      "file": "value-sets/type_incident.csv",
                       "format": "CONCATENATE(E2,\" - \",F2,\" - \",G2)",
                       "columns": {
                         "value": "value_3",
@@ -47,7 +47,7 @@
                     "label": "Select an Incident Type",
                     "required": false,
                     "dataSource": {
-                      "file": "/value-sets/type_incident.csv",
+                      "file": "value-sets/type_incident.csv",
                       "format": "CONCATENATE(E2,\" - \",F2,\" - \",G2)",
                       "columns": {
                         "value": "value_3",
@@ -61,7 +61,7 @@
                     "label": "Select an Incident Type",
                     "required": false,
                     "dataSource": {
-                      "file": "/value-sets/type_incident.csv",
+                      "file": "value-sets/type_incident.csv",
                       "format": "CONCATENATE(E2,\" - \",F2,\" - \",G2)",
                       "columns": {
                         "value": "value_3",
@@ -239,7 +239,7 @@
                     "label": "Select a Location Type",
                     "required": false,
                     "dataSource": {
-                      "file": "/value-sets/type_location_use.csv",
+                      "file": "value-sets/type_location_use.csv",
                       "columns": {
                         "value": "value_1",
                         "display": "DISTINCT(description_1)"
@@ -252,7 +252,7 @@
                     "label": "Select Location Use",
                     "required": false,
                     "dataSource": {
-                      "file": "/value-sets/type_location_use.csv",
+                      "file": "value-sets/type_location_use.csv",
                       "columns": {
                         "value": "value_2",
                         "display": "CONCATENATE(description_1,\" - \",description_2)"
@@ -265,7 +265,7 @@
                     "label": "Select Reason for Vacancy",
                     "required": false,
                     "dataSource": {
-                      "file": "/value-sets/type_vacancy.csv",
+                      "file": "value-sets/type_vacancy.csv",
                       "columns": {
                         "value": "value_1",
                         "display": "description"
